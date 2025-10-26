@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FarmOtor's Transport — Boutique</title>
+  <style>
+    body{font-family:Arial,sans-serif;margin:0;padding:0;background:#f6f7fb;color:#111}
+    header{background:#0b6b5a;color:white;padding:20px;text-align:center}
+    h1{margin:0}
+    main{max-width:1000px;margin:20px auto;padding:0 20px}
+    .layout{display:grid;grid-template-columns:2fr 1fr;gap:20px}
+    .products{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+    .product{background:#fff;padding:12px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.1);display:flex;flex-direction:column;align-items:center;text-align:center}
+    .product img{width:100%;height:150px;object-fit:cover;border-radius:8px}
+    .product h3{margin:10px 0 5px 0;font-size:18px}
+    .product p{margin:0 0 10px 0;color:#666;font-size:14px}
+    .price{font-weight:bold;margin-bottom:10px}
+    .btn{padding:10px 12px;background:#2b8a74;color:white;border:none;border-radius:8px;cursor:pointer}
+    .cart{background:#fff;padding:15px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.1)}
+    .cart h2{text-align:center;margin-top:0}
+    .cart ul{list-style:none;padding:0;margin:0}
+    .cart li{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #eee}
+    .cart li span{font-size:14px}
+    .remove{background:#e74c3c;color:white;border:none;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:12px}
+    .total{text-align:right;font-weight:bold;margin-top:10px}
+    footer{text-align:center;padding:20px;color:#555}
+    @media(max-width:800px){.layout{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>FarmOtor's Transport</h1>
+    <p>Boutique d'équipements agricoles</p>
+  </header>
+
+  <main>
+    <div class="layout">
+      <section>
+        <div class="products" id="products"></div>
+      </section>
+      <aside class="cart">
+        <h2>Panier</h2>
+        <ul id="cart-list"></ul>
+        <div class="total" id="cart-total">Total: €0</div>
+        <button class="btn" id="checkout">Commander</button>
+      </aside>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2025 FarmOtor's Transport</p>
+  </footer>
+
+  <script>
+    const PRODUCTS = [
+      {id:1,name:'Remorque robuste 2T',price:1290,desc:'Remorque acier, capacité 2 tonnes',img:'https://images.unsplash.com/photo-1593642634367-d91a135587b5?auto=format&fit=crop&w=800&q=60'},
+      {id:2,name:"Sangle d'arrimage 5m",price:24,desc:'Sangle résistante avec cliquet',img:'https://images.unsplash.com/photo-1592861956009-6b3d6bf3d7b1?auto=format&fit=crop&w=800&q=60'},
+      {id:3,name:'Couvercle de benne',price:199,desc:'Protection étanche pour benne',img:'https://images.unsplash.com/photo-1536305030010-3b2b8d1f66d6?auto=format&fit=crop&w=800&q=60'},
+      {id:4,name:'Attache remorque universelle',price:59,desc:'Attache 50mm, acier traité',img:'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=60'}
+    ];
+
+    const productsEl = document.getElementById('products');
+    const cartListEl = document.getElementById('cart-list');
+    const cartTotalEl = document.getElementById('cart-total');
+    const cart = [];
+
+    function renderProducts(){
+      productsEl.innerHTML = PRODUCTS.map(p => `
+        <div class='product'>
+          <img src='${p.img}' alt='${p.name}' />
+          <h3>${p.name}</h3>
+          <p>${p.desc}</p>
+          <div class='price'>€${p.price}</div>
+          <button class='btn' onclick='addToCart(${p.id})'>Ajouter au panier</button>
+        </div>
+      `).join('');
+    }
+
+    function addToCart(id){
+      const prod = PRODUCTS.find(p=>p.id===id);
+      const existing = cart.find(item=>item.id===id);
+      if(existing){ existing.qty++; } else { cart.push({...prod, qty:1}); }
+      updateCart();
+    }
+
+    function removeFromCart(id){
+      const index = cart.findIndex(item=>item.id===id);
+      if(index>-1){
+        if(cart[index].qty>1){ cart[index].qty--; } else { cart.splice(index,1); }
+      }
+      updateCart();
+    }
+
+    function updateCart(){
+      cartListEl.innerHTML = cart.map(item => `
+        <li>
+          <span>${item.name} × ${item.qty}</span>
+          <span>
+            €${(item.price*item.qty).toFixed(2)}
+            <button class='remove' onclick='removeFromCart(${item.id})'>✕</button>
+          </span>
+        </li>
+      `).join('');
+      const total = cart.reduce((sum,i)=>sum+i.price*i.qty,0);
+      cartTotalEl.textContent = `Total: €${total.toFixed(2)}`;
+    }
+
+    document.getElementById('checkout').addEventListener('click',()=>{
+      if(cart.length===0){alert('Votre panier est vide !');return;}
+      const details = cart.map(i=>`${i.name} x${i.qty} — €${(i.price*i.qty).toFixed(2)}`).join('\n');
+      const body = encodeURIComponent(`Bonjour,\n\nJe souhaite commander:\n${details}\n\nMerci.`);
+      window.location.href = `mailto:contact@farmotor.example?subject=Commande&body=${body}`;
+    });
+
+    renderProducts();
+  </script>
+</body>
+</html>
